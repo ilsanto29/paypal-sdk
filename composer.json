@@ -18,7 +18,7 @@
     },
 	"autoload" : {
 		"psr-4" : {
-			"Paypal\\Sdk" : "/src"
+			"Paypal\\Sdk\\" : "/src"
 		}
 	}
 }
