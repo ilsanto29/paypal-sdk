@@ -45,11 +45,23 @@ class Paypal
     
     
     
+    const CATALOGS_PRODUCTS = [
+        "url" => "/v1/catalogs/products",
+        "content-type" => "application/json",
+        "method" => "POST"
+    ];
+    
+    const CATALOGS_PRODUCTS_LIST = [
+        "url" => "/v1/catalogs/products",
+        "content-type" => "application/json",
+        "method" => "GET"
+    ];
+    
     
     
     public function __construct($configFile = null)
     {
-        if(empty($configFile)) {
+        if(empty($configFile) || !file_exists($configFile)) {
             throw new \Exception("Verifica di aver indicato il file di configurazione per la classa PaypalSdk");
         }
         $config = $ini = parse_ini_file($configFile, true);        
@@ -172,8 +184,11 @@ class Paypal
     }
     
     public function __call($functionName, $data) {
-        $arr = constant("self::".strtoupper($functionName));
+        $arr = constant("self::".strtoupper($functionName));        
         $callMethod = $arr["url"];
+        if(!empty( $data[2] )) {
+            $callMethod .= (strpos($callMethod, '?') ? '&' : '?') . http_build_query($data[2]);
+        }
         try {
             $esito = $this->callApi($arr["method"], $callMethod , $data[0], $data[1]);
         } catch(Exception $e) {            
@@ -188,7 +203,7 @@ class Paypal
             $bodyArr = $strategy->hydrate($esito);            
             $hydrator = new ClassMethodsHydrator();
             $className = __NAMESPACE__ . "\\Response\\". ucfirst($functionName) . "Response";
-            $response = $hydrator->hydrate($bodyArr, new $className);    
+            $response = $hydrator->hydrate($bodyArr, new $className);
             $this->setMessage($response);
         }
         return $this;
@@ -201,7 +216,8 @@ class Paypal
         $headers = [],
         $data = NULL
         )
-    {               
+        
+    {   
         $this->setEsito(false);
         try {
             $response = $this->clientGuzzleHttp->request(
