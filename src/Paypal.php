@@ -58,6 +58,21 @@ class Paypal
     ];
     
     
+    /**
+     * PLANS
+     */
+    const CREATE_PLAN = [
+        "url" => "/v1/billing/plans",
+        "content-type" => "application/json",
+        "method" => "POST"
+    ];
+
+    const PLANS_LIST= [
+        "url" => "/v1/billing/plans",
+        "content-type" => "application/json",
+        "method" => "GET"
+    ];
+    
     
     public function __construct($configFile = null)
     {
@@ -203,8 +218,14 @@ class Paypal
             $bodyArr = $strategy->hydrate($esito);            
             $hydrator = new ClassMethodsHydrator();
             $className = __NAMESPACE__ . "\\Response\\". ucfirst($functionName) . "Response";
-            $response = $hydrator->hydrate($bodyArr, new $className);
+
+            try {
+                $response = $hydrator->hydrate($bodyArr, new $className);
+            } catch(Exception $e) {                
+                throw new \Exception($e);
+            }   
             $this->setMessage($response);
+            $this->setEsito(true);
         }
         return $this;
     }
@@ -218,6 +239,7 @@ class Paypal
         )
         
     {   
+
         $this->setEsito(false);
         try {
             $response = $this->clientGuzzleHttp->request(
@@ -225,7 +247,8 @@ class Paypal
                 $url,
                 $headers,
                 json_encode($data)
-            );                   
+            );
+            $this->setEsito(true);
         } catch (\GuzzleHttp\Exception\ServerException $e) {
             if ($e->hasResponse()) {
                 return response()->json(['msg' => 'Server Error', 'error' => $e->getResponse()], 500);
