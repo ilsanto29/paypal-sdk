@@ -73,6 +73,22 @@ class Paypal
         "method" => "GET"
     ];
     
+    const PLAN_DETAILS= [
+        "url" => "/v1/billing/plans/%s",
+        "content-type" => "application/json",
+        "method" => "GET"
+    ];
+    
+    /**
+     * SUBSCRIBE PLAN
+     * @param unknown $configFile
+     */
+    
+    const SUBSCRIBE_PLAN= [
+        "url" => "/v1/billing/subscriptions",
+        "content-type" => "application/json",
+        "method" => "POST"
+    ];
     
     public function __construct($configFile = null)
     {
@@ -204,6 +220,10 @@ class Paypal
         if(!empty( $data[2] )) {
             $callMethod .= (strpos($callMethod, '?') ? '&' : '?') . http_build_query($data[2]);
         }
+        if(!empty( $data[3] )) {
+            $callMethod = sprintf($callMethod, $data[3] );
+        }
+        
         try {
             $esito = $this->callApi($arr["method"], $callMethod , $data[0], $data[1]);
         } catch(Exception $e) {            
