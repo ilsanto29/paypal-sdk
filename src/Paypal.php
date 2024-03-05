@@ -89,6 +89,18 @@ class Paypal
         "content-type" => "application/json",
         "method" => "POST"
     ];
+
+    const SUBSCRIBE_GET_TRANSACTION = [
+        "url" => "/v1/billing/subscriptions/%s/transactions",
+        "content-type" => "application/json",
+        "method" => "GET"
+    ];
+
+    const SUBSCRIBE_GET_DETAILS = [
+        "url" => "/v1/billing/subscriptions/%s",
+        "content-type" => "application/json",
+        "method" => "GET"
+    ];
     
     public function __construct($configFile = null)
     {
@@ -215,17 +227,23 @@ class Paypal
     }
     
     public function __call($functionName, $data) {
+
         $arr = constant("self::".strtoupper($functionName));        
         $callMethod = $arr["url"];
-        if(!empty( $data[2] )) {
-            $callMethod .= (strpos($callMethod, '?') ? '&' : '?') . http_build_query($data[2]);
-        }
         if(!empty( $data[3] )) {
             $callMethod = sprintf($callMethod, $data[3] );
         }
         
+        if(!empty( $data[2] )) {
+            $callMethod .= (strpos($callMethod, '?') ? '&' : '?') . http_build_query($data[2]);
+        }
         try {
-            $esito = $this->callApi($arr["method"], $callMethod , $data[0], $data[1]);
+            $debug = false;
+            if( strtoupper($functionName) == "SUBSCRIBE_GET_TRANSACTION") {
+                //echo "$functionName $callMethod"; die();
+            }
+            
+            $esito = $this->callApi($arr["method"], $callMethod , $data[0], $data[1], $debug);
         } catch(Exception $e) {            
             throw new \Exception($e);
         }     
@@ -238,10 +256,9 @@ class Paypal
             $bodyArr = $strategy->hydrate($esito);            
             $hydrator = new ClassMethodsHydrator();
             $className = __NAMESPACE__ . "\\Response\\". ucfirst($functionName) . "Response";
-
             try {
                 $response = $hydrator->hydrate($bodyArr, new $className);
-            } catch(Exception $e) {                
+            } catch(Exception $e) {
                 throw new \Exception($e);
             }   
             $this->setMessage($response);
@@ -255,20 +272,27 @@ class Paypal
         $method = "POST",
         $url = NULL,        
         $headers = [],
-        $data = NULL
+        $data = NULL,
+        $debug = false
         )
         
     {   
 
         $this->setEsito(false);
         try {
+            
             $response = $this->clientGuzzleHttp->request(
                 $method,
                 $url,
                 $headers,
                 json_encode($data)
-            );
+            );  
             $this->setEsito(true);
+            if( $debug ) {
+                echo "<pre>";
+                //print_r( json_decode($response->getBody()->getContents()));
+            }
+            
         } catch (\GuzzleHttp\Exception\ServerException $e) {
             if ($e->hasResponse()) {
                 return response()->json(['msg' => 'Server Error', 'error' => $e->getResponse()], 500);
@@ -291,8 +315,16 @@ class Paypal
         }
         catch (\GuzzleHttp\Exception\BadResponseException $e){
             return response()->json(['error' => $e]);
-        }        
-        return ($response->getBody()->getContents());
+        }   
+        $ret = ($response->getBody()->getContents());
+        if( $debug ) {
+            echo "ok";
+            print_r( $ret );
+            echo "ok fuori";
+            die();
+        }
+        
+        return $ret; 
     }
     
     /**

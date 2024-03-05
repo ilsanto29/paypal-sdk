@@ -191,40 +191,7 @@ class Subscribe_planResponse
     }
 }
 
-class ShippingAmount
-{
-    public ?string $currencyCode;
-    
-    public ?string $value;
-    
-    public function __construct(?string $currencyCode, ?string $value)
-    {
-        $this->currencyCode = $currencyCode;
-        $this->value = $value;
-    }
-    
-    public function getCurrencyCode(): ?string
-    {
-        return $this->currencyCode;
-    }
-    
-    public function getValue(): ?string
-    {
-        return $this->value;
-    }
-    
-    public function setCurrencyCode(?string $currencyCode): self
-    {
-        $this->currencyCode = $currencyCode;
-        return $this;
-    }
-    
-    public function setValue(?string $value): self
-    {
-        $this->value = $value;
-        return $this;
-    }
-}
+
 
 class Subscriber
 {
